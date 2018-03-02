@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        .mine{background: greenyellow;}
+    </style>
+    <script src="http://localhost:8080/socket.io/socket.io.js"></script>
+    <script>
+        let sock=io.connect('ws://localhost:8080/');
+        let online=0;
+        window.onload=function(){
+            let oBtn1=document.getElementById('btn1');
+            let oBtn2=document.getElementById('btn2');
+            let oBtnSend=document.getElementById('btn_send');
+            let oUser=document.getElementById('user');
+            let oPass=document.getElementById('pass');
+            let oText=document.getElementById('txt1');
+            let oUl=document.getElementById('ul1');
+            let cur_username='';
+
+            //注册
+            sock.on('reg_ret',(code,msg)=>{
+                if(code){
+                    alert('注册失败,'+msg);
+                }else{
+                    alert('注册成功');
+                }
+            });
+            oBtn1.onclick=function(){
+                sock.emit('reg',oUser.value,oPass.value);
+            }
+
+           // 登录
+            sock.on('login_ret',(code,msg)=>{
+                if(code){
+                    alert('登入失败,'+msg);
+                }else{
+                    alert('登入成功');
+                    online=1;
+                }
+            });
+            oBtn2.onclick=function(){
+                sock.emit('login',oUser.value,oPass.value);
+                cur_username=oUser.value;
+
+            };
+
+            //消息
+            sock.on('msg_ret',(code,msg)=>{
+                if(code){
+                    alert('消息发送失败，'+msg);
+                }else{
+                    let oLi = document.createElement('li');
+                    oLi.innerHTML=`<h4>${cur_username}</h4><p>${oText.value}</p>`;
+                    oLi.className='mine';
+                    oUl.appendChild(oLi);
+                    oText.value='';
+                }
+            });
+            sock.on('msg',(name, txt)=>{
+                let oLi = document.createElement('li');
+                oLi.innerHTML=`<h4>${name}</h4><p>${txt}</p>`;
+                oUl.appendChild(oLi);
+            });
+
+            oBtnSend.onclick=function(){
+                if(online==1){
+                    sock.emit('msg',oText.value);
+                }else{
+                    alert('请先登录');
+                }
+
+            }
+
+
+
+        };
+    </script>
+</head>
+<body>
+    用户名: <input type="text" id="user"/><br/>
+    密码： <input type="password" id="pass"/><br/>
+    <input type="button" value="注册" id="btn1"/>
+    <input type="button" value="登录" id="btn2"/><br/>
+    <hr/>
+    <textarea name="" id="txt1" cols="30" rows="10"></textarea>
+    <input type="button" value="发送" id="btn_send"/><br/>
+    <ul id="ul1">
+    </ul>
+</body>
+</html>
